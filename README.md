@@ -1,6 +1,6 @@
 # ComfyUI Prompt Settings Restore
 
-ComfyUIのワークフロー付きPNGから、`Prompt Library Selector`、`Prompt Combiner`、`Power Lora Loader (Standalone)`の設定を現在のワークフローへまとめて復元するカスタムノードです。
+ComfyUIのワークフロー付きPNGから、`Prompt Library Selector`、`Prompt Combiner`、`Power Lora Loader (Standalone)`、`KSampler`の設定を現在のワークフローへまとめて復元するカスタムノードです。
 
 ## 必要なカスタムノード
 
@@ -11,11 +11,13 @@ ComfyUIのワークフロー付きPNGから、`Prompt Library Selector`、`Promp
 ## 使い方
 
 1. `Prompt Tools` → `Prompt Settings Restore`を追加します。
-2. 現在のワークフローに、復元先の`Prompt Library Selector`、`Prompt Combiner`、`Power Lora Loader (Standalone)`を1個ずつ配置します。
+2. 現在のワークフローに、復元先の`Prompt Library Selector`、`Prompt Combiner`、`Power Lora Loader (Standalone)`、`KSampler`を1個ずつ配置します。
 3. `PNGを選択して復元`を押し、ComfyUIワークフローを含むPNGを選択します。
-4. 3ノードの設定がPNG保存時点の内容へ置き換わります。
+4. 各ノードの設定がPNG保存時点の内容へ置き換わります。
 
 Power Lora Loaderでは、LoRAの一覧・順序・有効状態・Model/CLIP強度・出力トリガーワード・表示モード・Match・接続レイアウトを復元します。
+
+KSamplerでは画像に保存されたseed値を復元し、次回実行時に値が変わらないよう`control_after_generate`を`fixed`へ設定します。
 
 Prompt Library SelectorからPrompt Combinerへの直接接続も、接続先の入力名に基づいて復元します。Reroute、サブグラフ、その他の外部ノードからの接続は復元対象外です。
 

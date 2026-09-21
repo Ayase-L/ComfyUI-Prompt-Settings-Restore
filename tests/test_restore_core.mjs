@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import {
-  applyPowerLoraValues, extractCombinerValues, extractLibraryValues,
-  extractPowerLoraValues, findLibraryCombinerConnections, findSingleNode,
+  applyKSamplerSeed, applyPowerLoraValues, extractCombinerValues, extractKSamplerSeed,
+  extractLibraryValues, extractPowerLoraValues, findLibraryCombinerConnections, findSingleNode,
   parseWorkflowMetadata, restoreLibraryCombinerConnections, setWidgetValues,
 } from "../web/restore_core.mjs";
 
@@ -45,5 +45,13 @@ assert.equal(loraTarget.powerLora.state.value, loraSource.widgets_values[0]);
 assert.equal(loraTarget.properties.Match, "style");
 assert.equal(loraTarget.powerLora.preserve, true);
 assert.equal(loraTarget.mode, 2);
+const seedTarget = { widgets: [
+  { name: "seed", value: 0 }, { name: "control_after_generate", value: "randomize" },
+] };
+assert.equal(extractKSamplerSeed({ widgets_values: [123456789, "randomize"] }), 123456789);
+applyKSamplerSeed(seedTarget, 123456789);
+assert.equal(seedTarget.widgets[0].value, 123456789);
+assert.equal(seedTarget.widgets[1].value, "fixed");
+assert.throws(() => extractKSamplerSeed({ widgets_values: ["bad"] }), /seed値/);
 assert.throws(() => findSingleNode({ nodes: [] }, "PromptCombiner", "combiner"), /ありません/);
 console.log("restore_core tests passed");

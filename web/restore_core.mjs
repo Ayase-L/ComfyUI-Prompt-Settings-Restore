@@ -1,6 +1,7 @@
 export const LIBRARY_TYPE = "OPTPromptLibrarySelector";
 export const COMBINER_TYPE = "PromptCombiner";
 export const POWER_LORA_TYPE = "PowerLoraLoaderStandalone";
+export const KSAMPLER_TYPE = "KSampler";
 
 export const COMBINER_WIDGET_NAMES = [
   "quality_text", "quality_enabled", "character_text", "character_enabled",
@@ -153,4 +154,25 @@ export function applyPowerLoraValues(target, values) {
   if (values.mode !== undefined) target.mode = values.mode;
   target.graph?.afterChange?.();
   target.setDirtyCanvas?.(true, true);
+}
+
+export function extractKSamplerSeed(source) {
+  const seed = source?.widgets_values?.[0];
+  if (typeof seed !== "number" || !Number.isFinite(seed) || seed < 0 || !Number.isInteger(seed)) {
+    throw new Error("KSamplerのseed値を読み取れませんでした。");
+  }
+  return seed;
+}
+
+export function applyKSamplerSeed(target, seed) {
+  const seedWidget = (target?.widgets ?? []).find((widget) => widget.name === "seed");
+  if (!seedWidget) throw new Error("復元先KSamplerのseed入力が見つかりません。");
+  seedWidget.value = seed;
+  seedWidget.callback?.(seed);
+  const control = (target.widgets ?? []).find((widget) => widget.name === "control_after_generate");
+  if (control) {
+    control.value = "fixed";
+    control.callback?.("fixed");
+  }
+  target.graph?.setDirtyCanvas?.(true, true);
 }
