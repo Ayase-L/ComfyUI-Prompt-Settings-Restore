@@ -81,3 +81,43 @@ export function setWidgetValues(target, values) {
   target.graph?.setDirtyCanvas?.(true, true);
   return count;
 }
+
+function normalizeLink(link) {
+  if (Array.isArray(link)) {
+    return { id: link[0], originId: link[1], originSlot: link[2], targetId: link[3], targetSlot: link[4] };
+  }
+  return {
+    id: link?.id,
+    originId: link?.origin_id ?? link?.originId,
+    originSlot: link?.origin_slot ?? link?.originSlot,
+    targetId: link?.target_id ?? link?.targetId,
+    targetSlot: link?.target_slot ?? link?.targetSlot,
+  };
+}
+
+export function findLibraryCombinerConnections(workflow, sourceLibrary, sourceCombiner) {
+  const links = Array.isArray(workflow?.links) ? workflow.links.map(normalizeLink) : [];
+  const libraryId = String(sourceLibrary?.id);
+  const combinerId = String(sourceCombiner?.id);
+  return links
+    .filter((link) => String(link.originId) === libraryId && String(link.targetId) === combinerId)
+    .map((link) => ({
+      originSlot: Number(link.originSlot),
+      inputName: sourceCombiner?.inputs?.[Number(link.targetSlot)]?.name,
+    }))
+    .filter((connection) => Number.isInteger(connection.originSlot) && connection.inputName);
+}
+
+export function restoreLibraryCombinerConnections(targetLibrary, targetCombiner, connections) {
+  let count = 0;
+  for (const connection of connections) {
+    const targetSlot = (targetCombiner?.inputs ?? []).findIndex((input) => input.name === connection.inputName);
+    if (targetSlot < 0) continue;
+    const input = targetCombiner.inputs[targetSlot];
+    if (input?.link != null) targetCombiner.disconnectInput?.(targetSlot);
+    targetLibrary.connect?.(connection.originSlot, targetCombiner, targetSlot);
+    count += 1;
+  }
+  targetCombiner.graph?.setDirtyCanvas?.(true, true);
+  return count;
+}

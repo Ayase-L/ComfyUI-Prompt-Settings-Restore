@@ -2,7 +2,8 @@ import { app } from "/scripts/app.js";
 import { getPngMetadata } from "/scripts/pnginfo.js";
 import {
   COMBINER_TYPE, LIBRARY_TYPE, extractCombinerValues, extractLibraryValues,
-  findSingleNode, parseWorkflowMetadata, setWidgetValues,
+  findLibraryCombinerConnections, findSingleNode, parseWorkflowMetadata,
+  restoreLibraryCombinerConnections, setWidgetValues,
 } from "./restore_core.mjs";
 
 const NODE_TYPE = "PromptSettingsRestore";
@@ -50,9 +51,11 @@ function install(node) {
       const targetCombiner = currentNode(COMBINER_TYPE, "Prompt Combiner");
       const libraryValues = extractLibraryValues(sourceLibrary);
       const combinerValues = extractCombinerValues(sourceCombiner);
+      const connections = findLibraryCombinerConnections(workflow, sourceLibrary, sourceCombiner);
       const summary = [
         `Prompt Library Selector: ${setWidgetValues(targetLibrary, libraryValues)}項目`,
         `Prompt Combiner: ${setWidgetValues(targetCombiner, combinerValues)}項目`,
+        `入力接続: ${restoreLibraryCombinerConnections(targetLibrary, targetCombiner, connections)}本`,
       ];
       targetLibrary.onConfigure?.(targetLibrary.serialize?.() ?? {});
       targetCombiner.onConfigure?.(targetCombiner.serialize?.() ?? {});
