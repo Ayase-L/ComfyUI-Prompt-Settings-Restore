@@ -60,7 +60,7 @@ function install(node) {
       const powerLoraValues = extractPowerLoraValues(sourcePowerLora);
       const samplerMatches = matchKSamplers(sourceKSamplers, targetKSamplers);
       const connections = findLibraryCombinerConnections(workflow, sourceLibrary, sourceCombiner);
-      applyPowerLoraValues(targetPowerLora, powerLoraValues);
+      const loraResult = applyPowerLoraValues(targetPowerLora, powerLoraValues);
       const restoredSeeds = samplerMatches.map(({ source, target }) => {
         const seed = extractKSamplerSeed(source);
         applyKSamplerSeed(target, seed);
@@ -70,7 +70,7 @@ function install(node) {
         `Prompt Library Selector: ${setWidgetValues(targetLibrary, libraryValues)}項目`,
         `Prompt Combiner: ${setWidgetValues(targetCombiner, combinerValues)}項目`,
         `入力接続: ${restoreLibraryCombinerConnections(targetLibrary, targetCombiner, connections)}本`,
-        `Power Lora Loader: ${JSON.parse(powerLoraValues.loras).length}件`,
+        `Power Lora Loader: ON ${loraResult.restored}件を復元（${loraResult.added}件追加・既存保持）`,
         `KSampler seed: ${restoredSeeds.join(", ")}（fixed）`,
       ];
       targetLibrary.onConfigure?.(targetLibrary.serialize?.() ?? {});

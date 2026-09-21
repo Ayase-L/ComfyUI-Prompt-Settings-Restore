@@ -151,13 +151,42 @@ export function applyPowerLoraValues(target, values) {
   if (!target?.powerLora?.state || typeof target.powerLora.rebuild !== "function") {
     throw new Error("復元先のPower Lora Loader (Standalone)を初期化できていません。");
   }
+  let currentRows;
+  let sourceRows;
+  try {
+    currentRows = JSON.parse(target.powerLora.state.value || "[]");
+    sourceRows = JSON.parse(values.loras);
+    if (!Array.isArray(currentRows) || !Array.isArray(sourceRows)) throw new Error("invalid rows");
+  } catch (_error) {
+    throw new Error("Power Lora Loader (Standalone)のLoRA設定をマージできませんでした。");
+  }
+  const mergedRows = currentRows.map((row) => ({ ...row }));
+  const indexesByName = new Map();
+  mergedRows.forEach((row, index) => {
+    if (typeof row?.name === "string" && !indexesByName.has(row.name)) indexesByName.set(row.name, index);
+  });
+  let restored = 0;
+  let added = 0;
+  for (const row of sourceRows) {
+    if (row?.enabled !== true || typeof row?.name !== "string" || !row.name) continue;
+    const index = indexesByName.get(row.name);
+    if (index === undefined) {
+      indexesByName.set(row.name, mergedRows.length);
+      mergedRows.push({ ...row });
+      added += 1;
+    } else {
+      mergedRows[index] = { ...mergedRows[index], ...row };
+    }
+    restored += 1;
+  }
   target.graph?.beforeChange?.();
   target.properties = { ...(target.properties ?? {}), ...(values.properties ?? {}) };
-  target.powerLora.state.value = values.loras;
+  target.powerLora.state.value = JSON.stringify(mergedRows);
   target.powerLora.rebuild(true);
   if (values.mode !== undefined) target.mode = values.mode;
   target.graph?.afterChange?.();
   target.setDirtyCanvas?.(true, true);
+  return { restored, added, total: mergedRows.length };
 }
 
 export function extractKSamplerSeed(source) {

@@ -32,16 +32,21 @@ assert.equal(restoreLibraryCombinerConnections(targetLibrary, targetCombiner, co
 assert.equal(targetCombiner.disconnected, 0);
 assert.deepEqual(targetLibrary.connection.slice(0, 2), [0, targetCombiner]);
 const loraSource = {
-  widgets_values: ['[{"name":"style.safetensors","enabled":true,"strength_model":0.8,"strength_clip":0.7}]'],
+  widgets_values: ['[{"name":"style.safetensors","enabled":true,"strength_model":0.8,"strength_clip":0.7},{"name":"ignored.safetensors","enabled":false,"strength_model":1,"strength_clip":1},{"name":"new.safetensors","enabled":true,"strength_model":0.6,"strength_clip":0.5}]'],
   properties: { "Show Strengths": "Separate Model & Clip", Match: "style" }, mode: 2,
 };
 const loraValues = extractPowerLoraValues(loraSource);
 const loraTarget = {
-  properties: {}, powerLora: { state: { value: "[]" }, rebuild(preserve) { this.preserve = preserve; } },
+  properties: {}, powerLora: { state: { value: '[{"name":"style.safetensors","enabled":false,"strength_model":1,"strength_clip":1},{"name":"existing.safetensors","enabled":true,"strength_model":0.4,"strength_clip":0.4}]' }, rebuild(preserve) { this.preserve = preserve; } },
   graph: { beforeChange() { this.before = true; }, afterChange() { this.after = true; } },
 };
-applyPowerLoraValues(loraTarget, loraValues);
-assert.equal(loraTarget.powerLora.state.value, loraSource.widgets_values[0]);
+const loraResult = applyPowerLoraValues(loraTarget, loraValues);
+const mergedLoras = JSON.parse(loraTarget.powerLora.state.value);
+assert.deepEqual(mergedLoras.map((row) => row.name), ["style.safetensors", "existing.safetensors", "new.safetensors"]);
+assert.equal(mergedLoras[0].enabled, true);
+assert.equal(mergedLoras[0].strength_model, 0.8);
+assert.equal(mergedLoras[1].strength_model, 0.4);
+assert.deepEqual(loraResult, { restored: 2, added: 1, total: 3 });
 assert.equal(loraTarget.properties.Match, "style");
 assert.equal(loraTarget.powerLora.preserve, true);
 assert.equal(loraTarget.mode, 2);
