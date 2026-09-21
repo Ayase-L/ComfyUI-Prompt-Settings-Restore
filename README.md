@@ -15,7 +15,7 @@ ComfyUIのワークフロー付きPNGから、`Prompt Library Selector`、`Promp
 3. `PNGを選択して復元`を押し、ComfyUIワークフローを含むPNGを選択します。
 4. 各ノードの設定がPNG保存時点の内容へ置き換わります。
 
-Power Lora Loaderでは、画像側でONになっているLoRAだけを復元します。現在のノードに同名LoRAがあればModel/CLIP強度や出力トリガーワードなどを更新し、なければ末尾へ追加します。画像側でOFFのLoRAは無視し、現在のノードにだけ存在するLoRAは削除・変更せず保持します。表示モード・Match・接続レイアウトも復元します。
+Power Lora Loaderでは、画像側でONになっているLoRAだけを設定値の復元・追加対象にします。現在のノードに同名LoRAがあればModel/CLIP強度や出力トリガーワードなどを更新し、なければ末尾へ追加します。画像側でOFFのLoRAと、画像側に存在しない現在のLoRAは、一覧から削除せずOFFにします。画像側でOFFかつ現在側に存在しないLoRAは追加しません。表示モード・Match・接続レイアウトも復元します。
 
 KSamplerでは画像に保存されたseed値を復元し、次回実行時に値が変わらないよう`control_after_generate`を`fixed`へ設定します。複数のKSamplerがある場合は、画像側と現在側でノードIDが一致するKSamplerをそれぞれ復元します。
 

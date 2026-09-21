@@ -70,7 +70,7 @@ function install(node) {
         `Prompt Library Selector: ${setWidgetValues(targetLibrary, libraryValues)}項目`,
         `Prompt Combiner: ${setWidgetValues(targetCombiner, combinerValues)}項目`,
         `入力接続: ${restoreLibraryCombinerConnections(targetLibrary, targetCombiner, connections)}本`,
-        `Power Lora Loader: ON ${loraResult.restored}件を復元（${loraResult.added}件追加・既存保持）`,
+        `Power Lora Loader: ON ${loraResult.restored}件を復元（${loraResult.added}件追加・${loraResult.disabled}件OFF）`,
         `KSampler seed: ${restoredSeeds.join(", ")}（fixed）`,
       ];
       targetLibrary.onConfigure?.(targetLibrary.serialize?.() ?? {});

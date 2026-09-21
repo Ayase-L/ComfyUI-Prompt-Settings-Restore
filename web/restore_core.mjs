@@ -160,13 +160,15 @@ export function applyPowerLoraValues(target, values) {
   } catch (_error) {
     throw new Error("Power Lora Loader (Standalone)のLoRA設定をマージできませんでした。");
   }
-  const mergedRows = currentRows.map((row) => ({ ...row }));
+  const mergedRows = currentRows.map((row) => ({ ...row, enabled: false }));
   const indexesByName = new Map();
   mergedRows.forEach((row, index) => {
     if (typeof row?.name === "string" && !indexesByName.has(row.name)) indexesByName.set(row.name, index);
   });
   let restored = 0;
   let added = 0;
+  let disabled = mergedRows.length;
+  const activatedExisting = new Set();
   for (const row of sourceRows) {
     if (row?.enabled !== true || typeof row?.name !== "string" || !row.name) continue;
     const index = indexesByName.get(row.name);
@@ -176,6 +178,10 @@ export function applyPowerLoraValues(target, values) {
       added += 1;
     } else {
       mergedRows[index] = { ...mergedRows[index], ...row };
+      if (!activatedExisting.has(index)) {
+        activatedExisting.add(index);
+        disabled -= 1;
+      }
     }
     restored += 1;
   }
@@ -186,7 +192,7 @@ export function applyPowerLoraValues(target, values) {
   if (values.mode !== undefined) target.mode = values.mode;
   target.graph?.afterChange?.();
   target.setDirtyCanvas?.(true, true);
-  return { restored, added, total: mergedRows.length };
+  return { restored, added, disabled, total: mergedRows.length };
 }
 
 export function extractKSamplerSeed(source) {

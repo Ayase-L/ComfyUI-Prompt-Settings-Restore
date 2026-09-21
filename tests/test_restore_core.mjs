@@ -37,16 +37,19 @@ const loraSource = {
 };
 const loraValues = extractPowerLoraValues(loraSource);
 const loraTarget = {
-  properties: {}, powerLora: { state: { value: '[{"name":"style.safetensors","enabled":false,"strength_model":1,"strength_clip":1},{"name":"existing.safetensors","enabled":true,"strength_model":0.4,"strength_clip":0.4}]' }, rebuild(preserve) { this.preserve = preserve; } },
+  properties: {}, powerLora: { state: { value: '[{"name":"style.safetensors","enabled":false,"strength_model":1,"strength_clip":1},{"name":"existing.safetensors","enabled":true,"strength_model":0.4,"strength_clip":0.4},{"name":"ignored.safetensors","enabled":true,"strength_model":0.3,"strength_clip":0.3}]' }, rebuild(preserve) { this.preserve = preserve; } },
   graph: { beforeChange() { this.before = true; }, afterChange() { this.after = true; } },
 };
 const loraResult = applyPowerLoraValues(loraTarget, loraValues);
 const mergedLoras = JSON.parse(loraTarget.powerLora.state.value);
-assert.deepEqual(mergedLoras.map((row) => row.name), ["style.safetensors", "existing.safetensors", "new.safetensors"]);
+assert.deepEqual(mergedLoras.map((row) => row.name), ["style.safetensors", "existing.safetensors", "ignored.safetensors", "new.safetensors"]);
 assert.equal(mergedLoras[0].enabled, true);
 assert.equal(mergedLoras[0].strength_model, 0.8);
 assert.equal(mergedLoras[1].strength_model, 0.4);
-assert.deepEqual(loraResult, { restored: 2, added: 1, total: 3 });
+assert.equal(mergedLoras[1].enabled, false);
+assert.equal(mergedLoras[2].enabled, false);
+assert.equal(mergedLoras[2].strength_model, 0.3);
+assert.deepEqual(loraResult, { restored: 2, added: 1, disabled: 2, total: 4 });
 assert.equal(loraTarget.properties.Match, "style");
 assert.equal(loraTarget.powerLora.preserve, true);
 assert.equal(loraTarget.mode, 2);
