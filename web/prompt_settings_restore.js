@@ -1,7 +1,8 @@
 import { app } from "/scripts/app.js";
 import { getPngMetadata } from "/scripts/pnginfo.js";
 import {
-  COMBINER_TYPE, LIBRARY_TYPE, extractCombinerValues, extractLibraryValues,
+  COMBINER_TYPE, LIBRARY_TYPE, POWER_LORA_TYPE, applyPowerLoraValues,
+  extractCombinerValues, extractLibraryValues, extractPowerLoraValues,
   findLibraryCombinerConnections, findSingleNode, parseWorkflowMetadata,
   restoreLibraryCombinerConnections, setWidgetValues,
 } from "./restore_core.mjs";
@@ -29,7 +30,7 @@ function install(node) {
   root.style.cssText = "display:grid;gap:8px;padding:8px;box-sizing:border-box;";
   const pick = element("button", "PNGを選択して復元");
   pick.type = "button";
-  const status = element("div", "Prompt Library SelectorとPrompt Combinerの設定を復元します。");
+  const status = element("div", "Prompt Library Selector、Prompt Combiner、Power Lora Loaderの設定を復元します。");
   status.style.cssText = "white-space:pre-wrap;overflow-wrap:anywhere;opacity:.85;";
   const input = element("input");
   input.type = "file";
@@ -47,15 +48,20 @@ function install(node) {
       const workflow = parseWorkflowMetadata(await getPngMetadata(file));
       const sourceLibrary = findSingleNode(workflow, LIBRARY_TYPE, "Prompt Library Selector");
       const sourceCombiner = findSingleNode(workflow, COMBINER_TYPE, "Prompt Combiner");
+      const sourcePowerLora = findSingleNode(workflow, POWER_LORA_TYPE, "Power Lora Loader (Standalone)");
       const targetLibrary = currentNode(LIBRARY_TYPE, "Prompt Library Selector");
       const targetCombiner = currentNode(COMBINER_TYPE, "Prompt Combiner");
+      const targetPowerLora = currentNode(POWER_LORA_TYPE, "Power Lora Loader (Standalone)");
       const libraryValues = extractLibraryValues(sourceLibrary);
       const combinerValues = extractCombinerValues(sourceCombiner);
+      const powerLoraValues = extractPowerLoraValues(sourcePowerLora);
       const connections = findLibraryCombinerConnections(workflow, sourceLibrary, sourceCombiner);
+      applyPowerLoraValues(targetPowerLora, powerLoraValues);
       const summary = [
         `Prompt Library Selector: ${setWidgetValues(targetLibrary, libraryValues)}項目`,
         `Prompt Combiner: ${setWidgetValues(targetCombiner, combinerValues)}項目`,
         `入力接続: ${restoreLibraryCombinerConnections(targetLibrary, targetCombiner, connections)}本`,
+        `Power Lora Loader: ${JSON.parse(powerLoraValues.loras).length}件`,
       ];
       targetLibrary.onConfigure?.(targetLibrary.serialize?.() ?? {});
       targetCombiner.onConfigure?.(targetCombiner.serialize?.() ?? {});

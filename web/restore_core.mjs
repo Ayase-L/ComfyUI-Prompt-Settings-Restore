@@ -1,5 +1,6 @@
 export const LIBRARY_TYPE = "OPTPromptLibrarySelector";
 export const COMBINER_TYPE = "PromptCombiner";
+export const POWER_LORA_TYPE = "PowerLoraLoaderStandalone";
 
 export const COMBINER_WIDGET_NAMES = [
   "quality_text", "quality_enabled", "character_text", "character_enabled",
@@ -120,4 +121,36 @@ export function restoreLibraryCombinerConnections(targetLibrary, targetCombiner,
   }
   targetCombiner.graph?.setDirtyCanvas?.(true, true);
   return count;
+}
+
+export function extractPowerLoraValues(source) {
+  const raw = source?.widgets_values?.[0];
+  if (typeof raw !== "string") {
+    throw new Error("Power Lora Loader (Standalone)の保存値を読み取れませんでした。");
+  }
+  try {
+    if (!Array.isArray(JSON.parse(raw))) throw new Error("invalid rows");
+  } catch (_error) {
+    throw new Error("Power Lora Loader (Standalone)のLoRA設定が壊れています。");
+  }
+  return {
+    loras: raw,
+    properties: source?.properties && typeof source.properties === "object"
+      ? JSON.parse(JSON.stringify(source.properties))
+      : {},
+    mode: source?.mode,
+  };
+}
+
+export function applyPowerLoraValues(target, values) {
+  if (!target?.powerLora?.state || typeof target.powerLora.rebuild !== "function") {
+    throw new Error("復元先のPower Lora Loader (Standalone)を初期化できていません。");
+  }
+  target.graph?.beforeChange?.();
+  target.properties = { ...(target.properties ?? {}), ...(values.properties ?? {}) };
+  target.powerLora.state.value = values.loras;
+  target.powerLora.rebuild(true);
+  if (values.mode !== undefined) target.mode = values.mode;
+  target.graph?.afterChange?.();
+  target.setDirtyCanvas?.(true, true);
 }
