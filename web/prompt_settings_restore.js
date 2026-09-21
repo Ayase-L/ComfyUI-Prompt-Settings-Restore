@@ -4,8 +4,8 @@ import {
   COMBINER_TYPE, KSAMPLER_TYPE, LIBRARY_TYPE, POWER_LORA_TYPE,
   applyKSamplerSeed, applyPowerLoraValues,
   extractCombinerValues, extractLibraryValues, extractPowerLoraValues,
-  extractKSamplerSeed, findLibraryCombinerConnections, findSingleNode, parseWorkflowMetadata,
-  restoreLibraryCombinerConnections, setWidgetValues,
+  extractKSamplerSeed, findLibraryCombinerConnections, findNodes, findSingleNode,
+  matchKSamplers, parseWorkflowMetadata, restoreLibraryCombinerConnections, setWidgetValues,
 } from "./restore_core.mjs";
 
 const NODE_TYPE = "PromptSettingsRestore";
@@ -50,24 +50,28 @@ function install(node) {
       const sourceLibrary = findSingleNode(workflow, LIBRARY_TYPE, "Prompt Library Selector");
       const sourceCombiner = findSingleNode(workflow, COMBINER_TYPE, "Prompt Combiner");
       const sourcePowerLora = findSingleNode(workflow, POWER_LORA_TYPE, "Power Lora Loader (Standalone)");
-      const sourceKSampler = findSingleNode(workflow, KSAMPLER_TYPE, "KSampler");
+      const sourceKSamplers = findNodes(workflow, KSAMPLER_TYPE);
       const targetLibrary = currentNode(LIBRARY_TYPE, "Prompt Library Selector");
       const targetCombiner = currentNode(COMBINER_TYPE, "Prompt Combiner");
       const targetPowerLora = currentNode(POWER_LORA_TYPE, "Power Lora Loader (Standalone)");
-      const targetKSampler = currentNode(KSAMPLER_TYPE, "KSampler");
+      const targetKSamplers = (app.graph?._nodes ?? []).filter((item) => item.type === KSAMPLER_TYPE);
       const libraryValues = extractLibraryValues(sourceLibrary);
       const combinerValues = extractCombinerValues(sourceCombiner);
       const powerLoraValues = extractPowerLoraValues(sourcePowerLora);
-      const seed = extractKSamplerSeed(sourceKSampler);
+      const samplerMatches = matchKSamplers(sourceKSamplers, targetKSamplers);
       const connections = findLibraryCombinerConnections(workflow, sourceLibrary, sourceCombiner);
       applyPowerLoraValues(targetPowerLora, powerLoraValues);
-      applyKSamplerSeed(targetKSampler, seed);
+      const restoredSeeds = samplerMatches.map(({ source, target }) => {
+        const seed = extractKSamplerSeed(source);
+        applyKSamplerSeed(target, seed);
+        return `#${target.id}: ${seed}`;
+      });
       const summary = [
         `Prompt Library Selector: ${setWidgetValues(targetLibrary, libraryValues)}項目`,
         `Prompt Combiner: ${setWidgetValues(targetCombiner, combinerValues)}項目`,
         `入力接続: ${restoreLibraryCombinerConnections(targetLibrary, targetCombiner, connections)}本`,
         `Power Lora Loader: ${JSON.parse(powerLoraValues.loras).length}件`,
-        `KSampler seed: ${seed}（fixed）`,
+        `KSampler seed: ${restoredSeeds.join(", ")}（fixed）`,
       ];
       targetLibrary.onConfigure?.(targetLibrary.serialize?.() ?? {});
       targetCombiner.onConfigure?.(targetCombiner.serialize?.() ?? {});

@@ -17,7 +17,7 @@ ComfyUIのワークフロー付きPNGから、`Prompt Library Selector`、`Promp
 
 Power Lora Loaderでは、LoRAの一覧・順序・有効状態・Model/CLIP強度・出力トリガーワード・表示モード・Match・接続レイアウトを復元します。
 
-KSamplerでは画像に保存されたseed値を復元し、次回実行時に値が変わらないよう`control_after_generate`を`fixed`へ設定します。
+KSamplerでは画像に保存されたseed値を復元し、次回実行時に値が変わらないよう`control_after_generate`を`fixed`へ設定します。複数のKSamplerがある場合は、画像側と現在側でノードIDが一致するKSamplerをそれぞれ復元します。
 
 Prompt Library SelectorからPrompt Combinerへの直接接続も、接続先の入力名に基づいて復元します。Reroute、サブグラフ、その他の外部ノードからの接続は復元対象外です。
 

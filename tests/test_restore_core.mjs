@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import {
   applyKSamplerSeed, applyPowerLoraValues, extractCombinerValues, extractKSamplerSeed,
   extractLibraryValues, extractPowerLoraValues, findLibraryCombinerConnections, findSingleNode,
-  parseWorkflowMetadata, restoreLibraryCombinerConnections, setWidgetValues,
+  matchKSamplers, parseWorkflowMetadata, restoreLibraryCombinerConnections, setWidgetValues,
 } from "../web/restore_core.mjs";
 
 const libraryState = JSON.stringify({ selected_ids: ["a"], snapshot: [{ id: "a", prompt: "alice" }] });
@@ -53,5 +53,10 @@ applyKSamplerSeed(seedTarget, 123456789);
 assert.equal(seedTarget.widgets[0].value, 123456789);
 assert.equal(seedTarget.widgets[1].value, "fixed");
 assert.throws(() => extractKSamplerSeed({ widgets_values: ["bad"] }), /seed値/);
+const samplerSources = [{ id: 3 }, { id: 8 }];
+const samplerTargets = [{ id: 8 }, { id: 3 }, { id: 12 }];
+assert.deepEqual(matchKSamplers(samplerSources, samplerTargets).map(({ source, target }) => [source.id, target.id]), [[3, 3], [8, 8]]);
+assert.deepEqual(matchKSamplers([{ id: 1 }], [{ id: 2 }]).map(({ source, target }) => [source.id, target.id]), [[1, 2]]);
+assert.throws(() => matchKSamplers([{ id: 1 }, { id: 2 }], [{ id: 8 }]), /ノードID/);
 assert.throws(() => findSingleNode({ nodes: [] }, "PromptCombiner", "combiner"), /ありません/);
 console.log("restore_core tests passed");

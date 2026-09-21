@@ -32,6 +32,10 @@ export function findSingleNode(workflow, type, displayName) {
   return matches[0];
 }
 
+export function findNodes(workflow, type) {
+  return (workflow?.nodes ?? []).filter((node) => node?.type === type || node?.class_type === type);
+}
+
 export function extractLibraryValues(source) {
   const values = source?.widgets_values;
   if (!Array.isArray(values) || typeof values[0] !== "string") {
@@ -175,4 +179,18 @@ export function applyKSamplerSeed(target, seed) {
     control.callback?.("fixed");
   }
   target.graph?.setDirtyCanvas?.(true, true);
+}
+
+export function matchKSamplers(sourceNodes, targetNodes) {
+  if (!sourceNodes.length) throw new Error("画像のワークフローにKSamplerがありません。");
+  if (!targetNodes.length) throw new Error("現在のワークフローにKSamplerがありません。先に追加してください。");
+  const targetsById = new Map(targetNodes.map((node) => [String(node.id), node]));
+  const matches = sourceNodes
+    .map((source) => ({ source, target: targetsById.get(String(source.id)) }))
+    .filter((pair) => pair.target);
+  if (matches.length) return matches;
+  if (sourceNodes.length === 1 && targetNodes.length === 1) {
+    return [{ source: sourceNodes[0], target: targetNodes[0] }];
+  }
+  throw new Error("複数のKSamplerをノードIDで対応付けできないため復元を中断しました。");
 }
